@@ -38,13 +38,15 @@ export class ProductosComponent {
       .pipe(takeUntil(this.destroy$))
       .subscribe((productos: Producto[]) => {
         this.dataSource.data = productos;
+        console.log(this.dataSource.data)
       });
   }
 
-  cambiarEstatus(producto: any) {
-    const { cveProducto, activo } = producto;
+  cambiarEstatus(producto: Producto) {
+    const { cveProducto, estatus } = producto;
+    console.log(estatus)
     if (cveProducto !== undefined) {
-      const nuevoEstatus = !activo; 
+      const nuevoEstatus = !estatus; 
   
       this.productoSvc.cambiarEstatus(cveProducto, nuevoEstatus)
         .pipe(takeUntil(this.destroy$))

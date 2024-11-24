@@ -21,7 +21,7 @@ export class ProductosService {
 
   // Cambiar estatus de un producto
   cambiarEstatus(cveProducto: number, estatus: boolean): Observable<any> {
-    return this.http.patch<any>(`${environment.API_URL}/producto/${cveProducto}`, { estatus }, { headers: { "requireToken": "true" } })
+    return this.http.patch<any>(`${environment.API_URL}/producto/${cveProducto}/${ estatus }`,null, { headers: { "requireToken": "true" } })
       .pipe(catchError((error) => this.handlerError(error)));
   }
 

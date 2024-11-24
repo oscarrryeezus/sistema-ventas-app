@@ -6,4 +6,5 @@ export interface Producto{
     precio:number;
     cantidad:number;
     cveCategoria: number;
+    estatus: boolean;
 }

@@ -31,6 +31,7 @@ export class ProductoDialogComponent implements OnInit, OnDestroy {
     cantidad: ['', [Validators.required, Validators.min(1)]],
     precio: ['', [Validators.required, Validators.min(0)]],
     cveCategoria:['',[Validators.required]],
+    estatus: [true, [Validators.required]]
   });
 
   constructor(
@@ -61,10 +62,11 @@ export class ProductoDialogComponent implements OnInit, OnDestroy {
     if (this.data.user?.cveProducto) { 
       this.productoForm.patchValue({
         cveProducto: this.data.user.cveProducto,
-        descripcion: this.data.user.nombre,
+        descripcion: this.data.user.descripcion,
         cantidad: this.data.user.cantidad,
         precio: this.data.user.precio,
         cveCategoria: this.data.user.cveCategoria,
+        estatus: this.data.user.estatus
       });
 
       this.titleButton = 'Actualizar';
@@ -85,6 +87,7 @@ export class ProductoDialogComponent implements OnInit, OnDestroy {
       precio: parseFloat(formValue.precio!),
       cantidad: parseInt(formValue.cantidad!),
       cveCategoria: parseInt(formValue.cveCategoria!),
+      estatus: true
     };
 
     if (this.actionTODO === Action.NEW) {
@@ -99,6 +102,7 @@ export class ProductoDialogComponent implements OnInit, OnDestroy {
         precio: parseFloat(formValue.precio!),
         cantidad: parseInt(formValue.cantidad!),
         cveCategoria: parseInt(formValue.cveCategoria!),
+        estatus: true
       };
 
       const cveProducto: number = parseInt(formValue.cveProducto!);
