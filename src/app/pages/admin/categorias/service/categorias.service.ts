@@ -18,7 +18,7 @@ export class CategoriasService {
   }
 
   cambiarEstatus(cveCategoria: number, estatus: boolean): Observable<any> {
-    return this.http.patch<any>(`${environment.API_URL}/categoria/${cveCategoria}`, { estatus }, { headers: { "requireToken": "true" } })
+    return this.http.patch<any>(`${environment.API_URL}/categoria/${cveCategoria}/${ estatus }`,null , { headers: { "requireToken": "true" } })
       .pipe(catchError((error) => this.handlerError(error)));
   }
 
