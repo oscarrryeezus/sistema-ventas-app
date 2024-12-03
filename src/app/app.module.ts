@@ -21,7 +21,7 @@ import { CategoriaDialogComponent } from './pages/admin/categorias/components/ca
     FooterComponent,
     SidebarComponent,
     UsuarioDialogComponent,
-    CategoriaDialogComponent
+    CategoriaDialogComponent,
   ],
   imports: [
     BrowserModule,
