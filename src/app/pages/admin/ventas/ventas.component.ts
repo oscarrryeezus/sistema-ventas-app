@@ -1,100 +1,149 @@
-import { HttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { VentasService } from './services/ventas.service';
+import { ProductosService } from '../productos/service/productos.service';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil, map, startWith } from 'rxjs/operators';
+import { Producto } from '../../../shared/models/producto.interface';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-ventas',
   templateUrl: './ventas.component.html',
-  styleUrl: './ventas.component.scss'
+  styleUrls: ['./ventas.component.scss'],
 })
-export class VentasComponent {
-  productosFiltrados: any[] = [];
-  productoSeleccionado: any = null;
-  cantidad: number = 0;
-  carrito: any[] = [];
-  totalVenta: number = 0;
+export class VentasComponent implements OnInit, OnDestroy {
+  productoSeleccionado: Producto | null = null;
+  cantidad = 1;
+  productos: any[] = []; // Carrito
+  productosFetcheados: Producto[] = []; // Lista de productos disponibles
+  subtotal = 0;
+  total = 0;
+  private destroy$ = new Subject<void>();
+  myControl = new FormControl('');
+  filteredOptions!: Observable<Producto[]>;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private dialog: MatDialog,
+    private productSvc: ProductosService,
+    private snackbar: MatSnackBar,
+    private ventasSvc: VentasService
+  ) {}
 
-  // Buscar productos desde el servidor (autocomplete)
-  buscarProducto(query: string) {
-    if (query.trim() === '') {
-      this.productosFiltrados = [];
+  ngOnInit(): void {
+    this.cargarProductos();
+    // Configura el observable del autocomplete
+    this.filteredOptions = this.myControl.valueChanges.pipe(
+      startWith(''),
+      map((value) => (typeof value === 'string' ? value : value)),
+      map((descripcion) => this.filtrarProductos(descripcion || ''))
+    );
+  }
+
+  cargarProductos() {
+    this.productSvc.listarProductos()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (productos: Producto[]) => {
+          this.productosFetcheados = productos;
+          console.log('Productos cargados:', productos);
+        },
+        (error) => this.mostrarAlerta('Error al cargar productos', 'Cerrar')
+      );
+  }
+
+  filtrarProductos(value: string): Producto[] {
+    const filterValue = value.toLowerCase();
+    return this.productosFetcheados.filter((producto) =>
+      producto.descripcion.toLowerCase().includes(filterValue)
+    );
+  }
+
+  displayFn(producto: Producto): string {
+    return producto ? producto.descripcion : '';
+  }
+
+  agregarProducto() {
+    if (!this.productoSeleccionado) {
+      this.mostrarAlerta('Selecciona un producto válido', 'Cerrar');
       return;
     }
 
-    this.http
-      .get<any[]>(`http://localhost:3000/ventas/productos-autocomplete?query=${query}`)
-      .subscribe((productos) => {
-        this.productosFiltrados = productos;
-      });
-  }
+    if (this.cantidad <= 0 || this.cantidad > this.productoSeleccionado.cantidad) {
+      this.mostrarAlerta('La cantidad no es válida o excede el stock disponible', 'Cerrar');
+      return;
+    }
 
-  // Seleccionar producto del autocomplete
-  seleccionarProducto(producto: any) {
-    this.productoSeleccionado = producto;
-  }
-
-  // Agregar producto al carrito
-  agregarProducto() {
-    if (!this.productoSeleccionado || this.cantidad <= 0) return;
-
-    // Verificar si el producto ya está en el carrito
-    const itemExistente = this.carrito.find(
-      (item) => item.producto.cveProducto === this.productoSeleccionado.cveProducto
+    const productoExistente = this.productos.find(
+      (item) => item.cveProducto === this.productoSeleccionado?.cveProducto
     );
 
-    if (itemExistente) {
-      itemExistente.cantidad += this.cantidad;
+    if (productoExistente) {
+      productoExistente.cantidad += this.cantidad;
     } else {
-      this.carrito.push({
-        producto: this.productoSeleccionado,
+      this.productos.push({
+        ...this.productoSeleccionado,
         cantidad: this.cantidad,
       });
     }
 
-    this.actualizarTotal();
+    this.calcularTotales();
     this.productoSeleccionado = null;
-    this.cantidad = 0;
+    this.myControl.setValue('');
+    this.cantidad = 1;
+    this.mostrarAlerta('Producto agregado al carrito', 'Cerrar');
   }
 
-  // Eliminar producto del carrito
-  eliminarProducto(item: any) {
-    const index = this.carrito.indexOf(item);
-    if (index >= 0) {
-      this.carrito.splice(index, 1);
-    }
-    this.actualizarTotal();
+  eliminarProducto(index: number) {
+    this.productos.splice(index, 1);
+    this.calcularTotales();
   }
 
-  // Actualizar total de la venta
-  actualizarTotal() {
-    this.totalVenta = this.carrito.reduce(
-      (acc, item) => acc + item.cantidad * item.producto.precio,
+  calcularTotales() {
+    this.subtotal = this.productos.reduce(
+      (sum, item) => sum + item.precio * item.cantidad,
       0
     );
+    this.total = this.subtotal;
   }
 
-  // Procesar venta
-  procesarVenta() {
+  guardarVenta() {
     const venta = {
-      totalVenta: this.totalVenta,
-      cveUsuario: 1, // Usuario actual, en un sistema real sería dinámico
-      productos: this.carrito.map((item) => ({
-        cveProducto: item.producto.cveProducto,
-        cantidad: item.cantidad,
-        precioProducto: item.producto.precio,
+      productos: this.productos.map((p) => ({
+        cveProducto: p.cveProducto,
+        cantidad: p.cantidad,
+        precio: p.precio,
       })),
+      total: this.total,
     };
 
-    this.http.post('http://localhost:3000/ventas/procesar', venta).subscribe(
+    this.ventasSvc.procesarVenta(venta).subscribe(
       (response) => {
-        alert('Venta procesada con éxito');
-        this.carrito = [];
-        this.totalVenta = 0;
+        this.productos = [];
+        this.subtotal = 0;
+        this.total = 0;
+        this.mostrarAlerta('Venta realizada con éxito', 'Cerrar');
       },
-      (error) => {
-        alert('Error al procesar la venta');
-      }
+      (error) => this.mostrarAlerta('Error al procesar la venta', 'Cerrar')
     );
+  }
+
+  cancelar() {
+    this.productos = [];
+    this.subtotal = 0;
+    this.total = 0;
+    this.mostrarAlerta('Venta cancelada', 'Cerrar');
+  }
+
+  mostrarAlerta(mensaje: string, accion: string) {
+    this.snackbar.open(mensaje, accion, {
+      duration: 3000,
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

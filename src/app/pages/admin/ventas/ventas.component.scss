@@ -1,12 +1,17 @@
-.container {
-    margin: 20px;
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
   }
   
-  .table {
+  .resumen {
     margin-top: 20px;
+    font-weight: bold;
   }
   
-  h3 {
+  .botones {
     margin-top: 20px;
+    display: flex;
+    gap: 10px;
   }
   

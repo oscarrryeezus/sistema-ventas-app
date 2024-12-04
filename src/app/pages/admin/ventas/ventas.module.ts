@@ -1,29 +1,33 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
-import { VentasRoutingModule } from './venta-routing.module'; 
-import { VentasComponent } from './ventas.component'; 
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MaterialModule } from '../../../material.module';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { VentaDialogComponent } from './components/venta-dialog/venta-dialog.component';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { VentasComponent } from './ventas.component';
+import { VentasDialogComponent } from './components/ventas-dialog/ventas-dialog.component';
+import { MatTable } from '@angular/material/table';
+import { AsyncAction } from 'rxjs/internal/scheduler/AsyncAction';
 
 @NgModule({
   declarations: [
-    VentasComponent,
-    VentaDialogComponent
+    VentasComponent, VentasDialogComponent
   ],
   imports: [
     CommonModule,
-    VentasRoutingModule,
-    ReactiveFormsModule,
-    MaterialModule,
     FormsModule,
-    BrowserAnimationsModule, // Asegúrate de importar esto para Angular Material
-    MatInputModule, // Para inputs con Material
-    MatFormFieldModule, // Para envoltura de inp
-  ]
+    ReactiveFormsModule, // Para usar formularios reactivos
+    MatAutocompleteModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatButtonModule,
+    MatSnackBarModule,
+    MatTable,
+    AsyncPipe
+  ],
 })
-export class VentasModule { }
+export class VentasModule {}
